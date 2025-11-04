@@ -108,7 +108,48 @@ Flagę `-N` (`--no-buffer`) dodaj, aby `curl` wypisywał dane na bieżąco.
 Każdy fragment odpowiedzi ma format `data: {...}` zgodnie z konwencją SSE, a na końcu
 pojawia się `data: [DONE]` sygnalizujące zamknięcie strumienia.
 
-### 3. Minimalny klient Pythona
+### 3. Korzystanie z narzędzi MCP przez API
+
+Serwer automatycznie przekazuje do modelu zestaw narzędzi, które pozwalają manipulować
+plikami projektu lub uruchamiać bezpieczne polecenia. Aby z nich skorzystać, poinformuj
+model w wiadomości `system` lub `user`, jakie narzędzie ma wywołać i z jakimi
+argumentami. Poniższy przykład instruuje model, aby użył funkcji `read_file` i odczytał
+początek pliku `README.md`:
+
+```bash
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "llama3.2:3b",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Masz dostęp do narzędzia read_file. Użyj go, gdy potrzebujesz treści pliku."
+          },
+          {
+            "role": "user",
+            "content": "Podaj pierwsze linie README.md, korzystając z read_file."
+          }
+        ]
+      }'
+```
+
+Model odpowiada, prosząc o użycie narzędzia; serwer wywoła funkcję i prześle wynik jako
+wiadomość `tool`, a następnie wróci do modelu po końcową odpowiedź. W rezultacie klient
+otrzyma standardową strukturę OpenAI z wiadomością `assistant`, która zawiera treść
+pliku lub komunikat o błędzie.
+
+#### Dostępne narzędzia
+
+| Nazwa               | Opis                                                                 |
+|---------------------|----------------------------------------------------------------------|
+| `read_file`         | Zwraca zawartość wskazanego pliku tekstowego w repozytorium.         |
+| `write_file`        | Tworzy lub nadpisuje plik treścią dostarczoną w argumencie.          |
+| `list_files`        | Wyświetla listę plików i katalogów w podanej ścieżce.                 |
+| `run_shell_command` | Uruchamia bezpieczne polecenie powłoki w katalogu projektu.          |
+| `search_in_files`   | Wyszukuje wzorzec regularny w plikach znajdujących się w katalogu.   |
+
+### 4. Minimalny klient Pythona
 ```python
 import asyncio
 
