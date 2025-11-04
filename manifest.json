@@ -1,0 +1,24 @@
+{
+  "name": "mr-mcp",
+  "version": "0.1.0",
+  "description": "Minimalny serwer MCP z narzędziem ping.",
+  "endpoints": {
+    "http": "http://localhost:8765"
+  },
+  "tools": [
+    {
+      "name": "ping",
+      "description": "Odbija wiadomość i dodaje znacznik czasu.",
+      "input_schema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Tekst do odesłania przez serwer"
+          }
+        }
+      }
+    }
+  ]
+}
