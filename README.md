@@ -1,0 +1,1 @@
+Codex niech to ulepsza.
