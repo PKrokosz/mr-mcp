@@ -1,14 +1,16 @@
 """FastAPI application providing an OpenAI-compatible chat completions endpoint backed by Ollama."""
-from collections.abc import Generator
-from typing import Any, Dict, List
+from __future__ import annotations
 
 import json
+from collections.abc import Generator
+from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 import ollama
+from mcp_server.tools import TOOLS, TOOL_FUNCTIONS
 
 app = FastAPI(title="MCP – lokalny OpenAI-klon")
 
@@ -43,7 +45,7 @@ class ChatCompletionResponse(BaseModel):
 
 @app.post("/v1/chat/completions")
 async def chat_completion(request: ChatRequest) -> Any:
-    """Handle chat completion requests with optional streaming."""
+    """Handle chat completion requests with optional streaming and tool support."""
 
     if request.stream:
         return StreamingResponse(
@@ -51,25 +53,89 @@ async def chat_completion(request: ChatRequest) -> Any:
             media_type="text/event-stream",
         )
 
-    try:
-        response = ollama.chat(
-            model=request.model,
-            messages=[message.model_dump() for message in request.messages],
-            stream=False,
-        )
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    messages = [message.model_dump() for message in request.messages]
 
-    payload = ChatCompletionResponse(
-        choices=[
-            ChatCompletionChoice(
-                message=Message(**response["message"])  # type: ignore[arg-type]
+    while True:
+        try:
+            response = ollama.chat(
+                model=request.model,
+                messages=messages,
+                tools=TOOLS,
+                stream=False,
             )
-        ],
-        model=request.model,
-    )
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return JSONResponse(content=payload.model_dump())
+        assistant_message = response.get("message")
+        if not isinstance(assistant_message, dict):
+            raise HTTPException(status_code=502, detail="Niepoprawna odpowiedź od modelu")
+
+        messages.append(assistant_message)
+        tool_calls = assistant_message.get("tool_calls") or []
+
+        if tool_calls:
+            for tool_call in tool_calls:
+                function_block = tool_call.get("function", {})
+                tool_name = function_block.get("name")
+                if not tool_name or tool_name not in TOOL_FUNCTIONS:
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "content": f"❌ Błąd: nieznane narzędzie '{tool_name}'",
+                            "name": tool_name or "unknown",
+                        }
+                    )
+                    continue
+
+                arguments: Any = function_block.get("arguments", {})
+                if isinstance(arguments, str):
+                    try:
+                        arguments = json.loads(arguments)
+                    except json.JSONDecodeError as exc:  # noqa: F841
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "content": "❌ Błąd: niepoprawne argumenty narzędzia",
+                                "name": tool_name,
+                            }
+                        )
+                        continue
+
+                if not isinstance(arguments, dict):
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "content": "❌ Błąd: argumenty muszą być obiektem JSON",
+                            "name": tool_name,
+                        }
+                    )
+                    continue
+
+                try:
+                    result = TOOL_FUNCTIONS[tool_name](**arguments)
+                except TypeError as exc:  # noqa: BLE001
+                    result = f"❌ Błąd: niepoprawne argumenty ({exc})"
+                messages.append(
+                    {
+                        "role": "tool",
+                        "content": result,
+                        "name": tool_name,
+                    }
+                )
+
+            continue
+
+        clean_message = {
+            "role": assistant_message.get("role", "assistant"),
+            "content": assistant_message.get("content", ""),
+        }
+
+        payload = ChatCompletionResponse(
+            choices=[ChatCompletionChoice(message=Message(**clean_message))],
+            model=request.model,
+        )
+
+        return JSONResponse(content=payload.model_dump())
 
 
 def _stream_chat(request: ChatRequest) -> Generator[str, None, None]:
