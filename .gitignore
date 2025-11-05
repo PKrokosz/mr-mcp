@@ -5,3 +5,6 @@ dist/
 .DS_Store
 coverage/
 .pnpm-store/
+data/*.csv
+output/*.html
+output/*.png
