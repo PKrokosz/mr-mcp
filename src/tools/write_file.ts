@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "fs";
-import { dirname, resolve } from "path";
+import { dirname, relative, resolve } from "path";
 import { z } from "zod";
 
 export const writeFileInputSchema = z.object({
@@ -18,11 +18,19 @@ export const writeFileJsonSchema = {
   }
 } as const;
 
-export function writeFileTool(input: WriteFileInput): { success: boolean; path: string } {
-  const safePath = resolve(process.cwd(), input.path);
-  if (!safePath.startsWith(process.cwd())) {
-    throw new Error("❌ Dostęp zabroniony");
+const projectRoot = process.cwd();
+
+function resolveProjectPath(requestedPath: string) {
+  const absolutePath = resolve(projectRoot, requestedPath);
+  const relativePath = relative(projectRoot, absolutePath);
+  if (relativePath.startsWith("..")) {
+    throw new Error("❌ Dostęp zabroniony: plik poza katalogiem projektu");
   }
+  return absolutePath;
+}
+
+export function writeFileTool(input: WriteFileInput): { success: boolean; path: string } {
+  const safePath = resolveProjectPath(input.path);
 
   try {
     mkdirSync(dirname(safePath), { recursive: true });

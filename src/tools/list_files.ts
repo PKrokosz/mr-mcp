@@ -1,5 +1,5 @@
 import { readdirSync } from "fs";
-import { resolve } from "path";
+import { relative, resolve } from "path";
 import { z } from "zod";
 
 export const listFilesInputSchema = z.object({
@@ -19,11 +19,19 @@ export const listFilesJsonSchema = {
   }
 } as const;
 
-export function listFilesTool(input: ListFilesInput): { files: string[] } {
-  const safePath = resolve(process.cwd(), input.directory);
-  if (!safePath.startsWith(process.cwd())) {
-    throw new Error("❌ Dostęp zabroniony");
+const projectRoot = process.cwd();
+
+function resolveProjectDirectory(requestedDirectory: string) {
+  const absolutePath = resolve(projectRoot, requestedDirectory);
+  const relativePath = relative(projectRoot, absolutePath);
+  if (relativePath.startsWith("..")) {
+    throw new Error("❌ Dostęp zabroniony: katalog poza projektem");
   }
+  return absolutePath;
+}
+
+export function listFilesTool(input: ListFilesInput): { files: string[] } {
+  const safePath = resolveProjectDirectory(input.directory);
 
   try {
     const files = readdirSync(safePath);
