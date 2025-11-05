@@ -1,7 +1,7 @@
 {
   "name": "mr-mcp",
   "version": "0.1.0",
-  "description": "Minimalny serwer MCP z narzędziem ping.",
+  "description": "Minimalny serwer MCP z zestawem narzędzi do pracy z plikami i CSV.",
   "endpoints": {
     "http": "http://localhost:8765"
   },
@@ -16,6 +16,108 @@
           "message": {
             "type": "string",
             "description": "Tekst do odesłania przez serwer"
+          }
+        }
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Odczytuje zawartość pliku tekstowego.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ścieżka do pliku"
+          }
+        }
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Zapisuje tekst do pliku.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path", "content"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ścieżka zapisu pliku"
+          },
+          "content": {
+            "type": "string",
+            "description": "Treść do zapisania"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_files",
+      "description": "Listuje pliki w katalogu.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ścieżka katalogu"
+          }
+        }
+      }
+    },
+    {
+      "name": "parse_csv",
+      "description": "Parsuje CSV i zwraca dane jako JSON.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ścieżka do pliku CSV"
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_data",
+      "description": "Analizuje dane CSV i zwraca statystyki.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Ścieżka do pliku CSV"
+          },
+          "column": {
+            "type": "string",
+            "description": "Nazwa kolumny do analizy (opcjonalna)"
+          }
+        }
+      }
+    },
+    {
+      "name": "generate_infographic",
+      "description": "Generuje infografikę HTML z danych CSV.",
+      "input_schema": {
+        "type": "object",
+        "required": ["csvPath"],
+        "properties": {
+          "csvPath": {
+            "type": "string",
+            "description": "Ścieżka do pliku CSV"
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "Ścieżka zapisu HTML",
+            "default": "output/infographic.html"
+          },
+          "title": {
+            "type": "string",
+            "description": "Tytuł infografiki",
+            "default": "Infografika"
           }
         }
       }

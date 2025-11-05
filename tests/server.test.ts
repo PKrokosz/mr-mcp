@@ -182,11 +182,14 @@ describe("MCP server", () => {
 
     expect(response.statusCode).toBe(200);
     const payload = response.json();
-    expect(payload.output.count).toBe(5);
-    expect(payload.output.numericCount).toBe(5);
-    expect(payload.output.min).toBeCloseTo(25);
-    expect(payload.output.max).toBeCloseTo(35);
-    expect(payload.output.totalResponses).toBeUndefined();
+    expect(payload.output.totalRows).toBe(5);
+    expect(payload.output.columns).toEqual(["Name", "Age", "Choice"]);
+    expect(payload.output.sample).toHaveLength(3);
+    expect(payload.output.columnStats).toEqual({
+      column: "Age",
+      uniqueCount: 5,
+      topValues: ["30", "25", "35", "28", "32"],
+    });
   });
 
   it("writes data to file", async () => {
@@ -227,6 +230,6 @@ describe("MCP server", () => {
     expect(existsSync(outputFile)).toBe(true);
     const content = readFileSync(outputFile, "utf-8");
     expect(content).toContain("Wyniki ankiety 2024");
-    expect(content).toContain("Łączna liczba odpowiedzi: 5");
+    expect(content).toContain("Liczba rekordów: 5");
   });
 });
