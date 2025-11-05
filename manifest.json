@@ -57,11 +57,11 @@
       "description": "Listuje pliki w katalogu.",
       "input_schema": {
         "type": "object",
-        "required": ["path"],
         "properties": {
-          "path": {
+          "directory": {
             "type": "string",
-            "description": "Ścieżka katalogu"
+            "description": "Ścieżka katalogu",
+            "default": "."
           }
         }
       }

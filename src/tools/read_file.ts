@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { resolve } from "path";
+import { relative, resolve } from "path";
 import { z } from "zod";
 
 export const readFileInputSchema = z.object({
@@ -19,11 +19,19 @@ export const readFileJsonSchema = {
   }
 } as const;
 
-export function readFileTool(input: ReadFileInput): { content: string } {
-  const safePath = resolve(process.cwd(), input.path);
-  if (!safePath.startsWith(process.cwd())) {
+const projectRoot = process.cwd();
+
+function resolveProjectPath(requestedPath: string) {
+  const absolutePath = resolve(projectRoot, requestedPath);
+  const relativePath = relative(projectRoot, absolutePath);
+  if (relativePath.startsWith("..")) {
     throw new Error("❌ Dostęp zabroniony: plik poza katalogiem projektu");
   }
+  return absolutePath;
+}
+
+export function readFileTool(input: ReadFileInput): { content: string } {
+  const safePath = resolveProjectPath(input.path);
 
   try {
     const content = readFileSync(safePath, "utf-8");

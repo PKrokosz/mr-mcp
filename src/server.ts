@@ -13,7 +13,7 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const manifest = JSON.parse(
-  readFileSync(join(process.cwd(), "manifest.json"), "utf-8")
+  readFileSync(join(__dirname, "../manifest.json"), "utf-8")
 );
 
 const toolUseSchema = z.object({
