@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>MCP Server - Karta użytkowania</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #2c3e50;
+      }
+      h2 {
+        color: #34495e;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+      .tool {
+        background: #ecf0f1;
+        padding: 15px;
+        margin: 10px 0;
+        border-left: 4px solid #3498db;
+      }
+      .endpoint {
+        background: #e8f5e9;
+        padding: 10px;
+        font-family: monospace;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      .example {
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🤖 MCP Server - Karta Użytkowania</h1>
+
+    <div class="card">
+      <h2>📡 Endpointy</h2>
+      <ul>
+        <li>Health Check: <code>GET /healthz</code></li>
+        <li>Manifest: <code>GET /.well-known/mcp/manifest</code></li>
+        <li>Wywołaj tool: <code>POST /tools/call</code></li>
+        <li>GUI: <code>GET /</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>🛠️ Dostępne Narzędzia</h2>
+
+      <div class="tool">
+        <h3>1. read_file</h3>
+        <p>Opis: Odczytuje zawartość pliku</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "read_file",
+  "input": { "path": "data/responses.csv" }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>2. write_file</h3>
+        <p>Opis: Zapisuje dane do pliku</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "write_file",
+  "input": {
+    "path": "output/report.txt",
+    "content": "Treść raportu"
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>3. list_files</h3>
+        <p>Opis: Listuje pliki w katalogu</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "list_files",
+  "input": { "directory": "data" }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>4. parse_csv</h3>
+        <p>Opis: Parsuje CSV i zwraca dane jako JSON</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "parse_csv",
+  "input": { "path": "data/responses.csv" }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>5. analyze_data</h3>
+        <p>Opis: Analizuje dane CSV i zwraca statystyki</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "analyze_data",
+  "input": {
+    "path": "data/responses.csv",
+    "column": "Age"
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>6. generate_infographic</h3>
+        <p>Opis: Generuje infografikę z danych CSV</p>
+        <div class="example">
+          <strong>Przykład:</strong>
+          <pre><code>POST /tools/call
+{
+  "tool": "generate_infographic",
+  "input": {
+    "csvPath": "data/responses.csv",
+    "outputPath": "output/infographic.html",
+    "title": "Wyniki ankiety 2024"
+  }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📥 Pobieranie danych z Google Sheets</h2>
+      <ol>
+        <li>Otwórz Google Sheets z odpowiedziami formularza</li>
+        <li>Kliknij: <em>File → Download → Comma Separated Values (.csv)</em></li>
+        <li>Zapisz plik jako <code>data/responses.csv</code> w katalogu projektu</li>
+        <li>Użyj narzędzia <code>parse_csv</code> lub <code>generate_infographic</code></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>🚀 Szybki Start</h2>
+      <pre><code># Uruchom serwer
+pnpm dev
+
+# W drugim terminalu - test narzędzia
+curl -X POST http://localhost:8765/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"tool":"list_files","input":{"directory":"data"}}'
+</code></pre>
+    </div>
+
+    <div class="card">
+      <h2>📊 Workflow: Od CSV do infografiki</h2>
+      <ol>
+        <li>Pobierz CSV z Google Sheets → <code>data/responses.csv</code></li>
+        <li>Sprawdź zawartość: <code>read_file</code></li>
+        <li>Przeanalizuj dane: <code>analyze_data</code></li>
+        <li>Wygeneruj infografikę: <code>generate_infographic</code></li>
+        <li>Otwórz plik: <code>output/infographic.html</code></li>
+      </ol>
+    </div>
+  </body>
+</html>
